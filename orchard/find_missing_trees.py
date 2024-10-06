@@ -13,6 +13,7 @@ from sklearn.cluster import KMeans
 def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[np.array, np.array]:
 # Adapted from https://stackoverflow.com/questions/75208601/how-can-i-cluster-coordinate-values-into-rows-using-their-y-axis-value by using the manhattan distance instead of Euclidian.
 # TODO: Silhoute score distance metric to be modified with orthogonal score
+
     y_adj = y - dir_slope*x
     y_adj_reshaped = y_adj.reshape(-1,1)
 
@@ -29,26 +30,25 @@ def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tupl
     
     # Since the cluster estimate is sometimes out by one 'row' in current direction,
     # run again for best_k_1-1 to best_k_1+1
-    best_k_log = []
-    for i in range(15):
-        max_score = -math.inf
-        best_k_2 = 0
+    final_model_res = KMeans()
+    max_score_2 = -math.inf
+    for i in range(3):
         for k in range(best_k_1-1, best_k_1+2):
             model = KMeans(n_clusters=k)
             model_res = model.fit(y_adj_reshaped)
             # Using manhattan metric instead of euclidian
             score = metrics.silhouette_score(y_adj_reshaped, model_res.labels_.astype(float), metric='manhattan')
-            if (score > max_score):
-                max_score = score
-                best_k_2 = k
-        best_k_log.append(best_k_2)
+            if (score > max_score_2):
+                max_score_2 = score
+                final_model_res = model_res
+    
 
-    # Look for most common best_k_2 found
-    most_common_k = np.bincount(np.array(best_k_log)).argmax()
+    # # Look for most common best_k_2 found
+    # most_common_k = np.bincount(np.array(best_k_log)).argmax()
 
-    # Final fit for the best model
-    final_model = KMeans(n_clusters=most_common_k)
-    final_model_res = final_model.fit(y_adj_reshaped)
+    # # Final fit for the best model
+    # final_model = KMeans(n_clusters=most_common_k)
+    # final_model_res = final_model.fit(y_adj_reshaped)
 
     # The y intercepts for y_adj (Where the line fitted to each 'row' crosses the y-axis)
     y_intercepts = np.squeeze(final_model_res.cluster_centers_, axis=1) 

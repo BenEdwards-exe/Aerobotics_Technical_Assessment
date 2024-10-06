@@ -46,6 +46,8 @@ A visual step-by-step example of how missing trees are found is provided in [fin
 ```
 
 
+## Docker Build
+> docker-compose up --build
 
 
 
@@ -53,6 +55,8 @@ A visual step-by-step example of how missing trees are found is provided in [fin
 - When the trees are clustered in a particular direction, the optimal number of clusters is determined with the [silhoutte score](https://scikit-learn.org/1.5/auto_examples/cluster/plot_kmeans_silhouette_analysis.html) using the manhattan distance. Silhoutte score uses the mean of inter-cluster distances and intra-cluster distances. However, opposed to normal clustering, the centroids of orchard rows can actually be seen as the entire line of the row. Therefore, a possible improvement could be to rather use the orthogonal distance between the point of a cluster and the line of the row.
 
 - Faster convergence of K-Means. This is the largest bottleneck.
+
+- For more than 5% removed, I think not all the outliers are identified. Maybe try an iterative approach by running twice or by lowering the z-threshold.
 
 
 
