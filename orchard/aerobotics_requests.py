@@ -1,27 +1,31 @@
-from dotenv import load_dotenv
-import os
 import requests
 
-# Load environment variables from .env file
-load_dotenv()
-# Access the API key
-AEROBOTICS_DEV_API_KEY = os.getenv('AEROBOTICS_DEV_API_KEY')
-API_BASE_URL = "https://api.aerobotics.com/farming"
+# Import Global Module Variables
+from config import headers
+from config import API_BASE_URL
+from config import AEROBOTICS_DEV_API_KEY
+
+# Fetch the details of a single orchard
+def fetch_single_orchard(orchard_id: int) -> requests.Response:
+    url =  f"{API_BASE_URL}/orchards/{orchard_id}/"
+    res = requests.get(url, headers=headers)
+    return res
+
+# Fetch data from all orchard surveys
+def fetch_all_orchard_surveys(orchard_id: int) -> requests.Response:
+    url = f"{API_BASE_URL}/surveys/?orchard_id={orchard_id}"
+    res = requests.get(url, headers=headers)
+    return res
 
 
-
+# Fetch data for single orchard survey
+def fetch_single_survey(survey_id: int) -> requests.Response:
+    url = f"{API_BASE_URL}/surveys/{survey_id}/tree_surveys/"
+    res = requests.get(url, headers=headers)
+    return res
 
 
 
 if __name__ == "__main__":
-    # print(f"Your API key is: {AEROBOTICS_DEV_API_KEY}")
-    print(AEROBOTICS_DEV_API_KEY)
-    headers = {
-    'Authorization': f'Bearer {AEROBOTICS_DEV_API_KEY}',
-    'Accept': 'application/json'
-    }
-    print(headers)
-    orchard_id = 216269
-    survey_response = requests.request(
-    "GET", f"{API_BASE_URL}/surveys/?orchard_id={orchard_id}", headers=headers)
-    print(survey_response.json())
+    r = fetch_single_orchard(216269)
+    print(r.json())

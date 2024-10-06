@@ -1,8 +1,8 @@
 import math
-import geopy
+import geopy.distance
 import numpy as np
 from itertools import combinations
-
+import geopandas as gpd
 import pandas as pd
 from shapely import LineString, Point, Polygon
 from sklearn import metrics
