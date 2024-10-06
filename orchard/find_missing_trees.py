@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans
 
 
 # TODO: Funciton description
-def clusterTreesBySlope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[np.array, np.array]:
+def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[np.array, np.array]:
 
     y_adj = y - dir_slope*x
     y_adj_reshaped = y_adj.reshape(-1,1)
@@ -58,7 +58,7 @@ def clusterTreesBySlope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[n
     return y_intercepts, y_labels
 
 # TODO: Funciton description
-def findOrchardSlopes(x,y):
+def find_orchard_slopes(x,y):
     assert(len(x) == len(y))
     # Index combinations used to form vectors
     idx_combinations = np.array(list(combinations(range(len(x)),2)))
@@ -102,7 +102,7 @@ def findOrchardSlopes(x,y):
     return tuple(slopes)
 
 # TODO: Funciton description
-def geometryLineStringsFromIntercepts(y_intercepts, dir_slope, x_min, x_max, y_min, y_max) -> list[LineString]:
+def linestrings_from_intercepts(y_intercepts, dir_slope, x_min, x_max, y_min, y_max) -> list[LineString]:
 
     n = len(y_intercepts)
     linestring_points = []
@@ -127,7 +127,7 @@ def distance_from_origin(row):
 
 # Find the distance between two adjacent trees in a certain direction
 # TODO: Funciton description
-def distanceBetweenAdjacentTrees(tree_classed_df, n_labels, dir_col_name: str):
+def distance_between_adj_trees(tree_classed_df, n_labels, dir_col_name: str):
     dir_distances_dict = {} # dict to store distance between trees respective of their direction label and ids
     dir_all_distances = [] # list to store all distances, independent of label
 
@@ -168,7 +168,7 @@ def distanceBetweenAdjacentTrees(tree_classed_df, n_labels, dir_col_name: str):
 # Return outlier distances between trees
 # Return List[(dir_label, tree_from_id, tree_to_id, distance),...]
 # TODO: Funciton description
-def outlierDistances(distances_all, distances_dict):
+def find_distance_outliers(distances_all, distances_dict):
     # Meand and Std for current direction
     mean = np.mean(distances_all)
     std = np.std(distances_all)
@@ -187,7 +187,7 @@ def outlierDistances(distances_all, distances_dict):
 
 # Find all grid intersections between outlier distances
 # TODO: Funciton description
-def findIntersectionsBetweenTrees(trees_classed_df, dir_outliers, curr_dir_linestrings, other_dir_linestrings):
+def find_intersects_between_trees(trees_classed_df, dir_outliers, curr_dir_linestrings, other_dir_linestrings):
     missing_points = []
 
     # Loop through all outliers in the current direction
@@ -244,7 +244,7 @@ def findIntersectionsBetweenTrees(trees_classed_df, dir_outliers, curr_dir_lines
 # orchard_response_json: GET https://api.aerobotics.com/farming/orchards/{orchard_id}/
 # survey_response_json: GET https://api.aerobotics.com/farming/surveys/{survey_id}/tree_surveys/
 # TODO: Funciton description
-def findMissingTrees(orchard_response_json, survey_response_json) -> list[dict]:
+def find_all_missing_trees(orchard_response_json, survey_response_json) -> list[dict]:
     
     # Extract polygon corners lng and lat values
     polygon_latlongs = orchard_response_json["polygon"]
@@ -268,31 +268,31 @@ def findMissingTrees(orchard_response_json, survey_response_json) -> list[dict]:
     y = trees_df["lat"].to_numpy()
 
     # Find the two direction slopes of the orchard
-    dir_1_slope, dir_2_slope = findOrchardSlopes(x, y)
+    dir_1_slope, dir_2_slope = find_orchard_slopes(x, y)
 
     # Cluster trees in each slope direction and get y-intercepts of each direction
-    dir_1_y_intercepts, dir_1_labels = clusterTreesBySlope(x, y, dir_1_slope)
-    dir_2_y_intercepts, dir_2_labels = clusterTreesBySlope(x, y, dir_2_slope)
+    dir_1_y_intercepts, dir_1_labels = cluster_trees_by_slope(x, y, dir_1_slope)
+    dir_2_y_intercepts, dir_2_labels = cluster_trees_by_slope(x, y, dir_2_slope)
 
     # Add the labels of the directional clustering to trees dataframe
     trees_df["dir_1_labels"] = dir_1_labels
     trees_df["dir_2_labels"] = dir_2_labels
 
     # Create geometry LineStrings for each row (cluster) in a direction
-    dir_1_linestrings = geometryLineStringsFromIntercepts(dir_1_y_intercepts, dir_1_slope, poly_min_x, poly_max_x, poly_min_y, poly_max_y)
-    dir_2_linestrings = geometryLineStringsFromIntercepts(dir_2_y_intercepts, dir_2_slope, poly_min_x, poly_max_x, poly_min_y, poly_max_y)
+    dir_1_linestrings = linestrings_from_intercepts(dir_1_y_intercepts, dir_1_slope, poly_min_x, poly_max_x, poly_min_y, poly_max_y)
+    dir_2_linestrings = linestrings_from_intercepts(dir_2_y_intercepts, dir_2_slope, poly_min_x, poly_max_x, poly_min_y, poly_max_y)
 
     # Calculate the distances between adjacent trees in a clustered direction
-    dir_1_distances, dir_1_distances_dict = distanceBetweenAdjacentTrees(trees_df, len(dir_1_y_intercepts), "dir_1_labels")
-    dir_2_distances, dir_2_distances_dict = distanceBetweenAdjacentTrees(trees_df, len(dir_2_y_intercepts), "dir_2_labels")
+    dir_1_distances, dir_1_distances_dict = distance_between_adj_trees(trees_df, len(dir_1_y_intercepts), "dir_1_labels")
+    dir_2_distances, dir_2_distances_dict = distance_between_adj_trees(trees_df, len(dir_2_y_intercepts), "dir_2_labels")
 
     # Get the outlier distances and ids of trees involved
-    dir_1_outliers = outlierDistances(dir_1_distances, dir_1_distances_dict)
-    dir_2_outliers = outlierDistances(dir_2_distances, dir_2_distances_dict)
+    dir_1_outliers = find_distance_outliers(dir_1_distances, dir_1_distances_dict)
+    dir_2_outliers = find_distance_outliers(dir_2_distances, dir_2_distances_dict)
 
     # Find all LineString intersections that are between trees that have been flagged as outliers
-    dir_1_missing_points = findIntersectionsBetweenTrees(trees_df, dir_1_outliers, dir_1_linestrings, dir_2_linestrings)
-    dir_2_missing_points = findIntersectionsBetweenTrees(trees_df, dir_2_outliers, dir_2_linestrings, dir_1_linestrings)
+    dir_1_missing_points = find_intersects_between_trees(trees_df, dir_1_outliers, dir_1_linestrings, dir_2_linestrings)
+    dir_2_missing_points = find_intersects_between_trees(trees_df, dir_2_outliers, dir_2_linestrings, dir_1_linestrings)
 
     # Remove all duplicate points
     missing_points_combined = list(set(dir_1_missing_points + dir_2_missing_points))
