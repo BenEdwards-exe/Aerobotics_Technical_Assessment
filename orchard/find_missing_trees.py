@@ -9,9 +9,10 @@ from sklearn import metrics
 from sklearn.cluster import KMeans
 
 
-# TODO: Funciton description
+# TODO: Function description
 def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[np.array, np.array]:
-
+# Adapted from https://stackoverflow.com/questions/75208601/how-can-i-cluster-coordinate-values-into-rows-using-their-y-axis-value by using the manhattan distance instead of Euclidian.
+# TODO: Silhoute score distance metric to be modified with orthogonal score
     y_adj = y - dir_slope*x
     y_adj_reshaped = y_adj.reshape(-1,1)
 
