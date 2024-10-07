@@ -9,10 +9,29 @@ from sklearn import metrics
 from sklearn.cluster import KMeans
 
 
-# TODO: Function description
+
 def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tuple[np.array, np.array]:
 # Adapted from https://stackoverflow.com/questions/75208601/how-can-i-cluster-coordinate-values-into-rows-using-their-y-axis-value by using the manhattan distance instead of Euclidian.
 # TODO: Silhoute score distance metric to be modified with orthogonal score
+    """
+    Cluster trees rows for a specified direction (slope). Iteratively runs k-means for clusters between min_clusters and max_clusters.
+
+    Parameters:
+        x : np.array
+            Numpy array of tree longitudes (x-coords).
+        y : np.array
+            Numpy array of tree latitudes (y-coords).
+        dir_slope : float
+            Slope of the current direction being considered.
+        min_clusters : int
+            Minimum K-Means search clusters.
+        max_clusters : int
+            Maximum K-Means search clusters.
+
+    Returns:
+        (y_intercepts, y_labels) : (np.array, np.array)
+            y-intercepts and y-labels for the current direction.
+    """
 
     y_adj = y - dir_slope*x
     y_adj_reshaped = y_adj.reshape(-1,1)
@@ -58,8 +77,22 @@ def cluster_trees_by_slope(x,y,dir_slope,min_clusters=2,max_clusters=50) -> tupl
 
     return y_intercepts, y_labels
 
-# TODO: Funciton description
-def find_orchard_slopes(x,y):
+
+def find_orchard_slopes(x,y) -> tuple[float, float]:
+    """
+    Find the two slopes that trees are planted in for an orchard.
+
+    Parameters:
+        x : np.array
+            Numpy array of tree longitudes (x-coords).
+        y : np.array
+            Numpy array of tree latitudes (y-coords).
+
+    Returns:
+        (slope_1, slope_2) : (float, float)
+            Two slopes.
+    """
+
     assert(len(x) == len(y))
     # Index combinations used to form vectors
     idx_combinations = np.array(list(combinations(range(len(x)),2)))
@@ -102,8 +135,24 @@ def find_orchard_slopes(x,y):
 
     return tuple(slopes)
 
-# TODO: Funciton description
+
 def linestrings_from_intercepts(y_intercepts, dir_slope, x_min, x_max, y_min, y_max) -> list[LineString]:
+    """
+    Create Shapely geometry LineStrings based on the intercepts and slope for a direction.
+    Bound LineStrings in the bouding box of the orchard
+
+    Parameters:
+        y_intercepts : np.array
+            Numpy array of y-intercepts.
+        dir_slope : float
+           Slope for current direction.
+        x_min, x_max, y_min, y_max : float
+            Bounding box of orchard polygon.
+
+    Returns:
+        direction_linestrings : [LineString]
+            List of LineStrings for current direction
+    """
 
     n = len(y_intercepts)
     linestring_points = []
@@ -126,9 +175,26 @@ def linestrings_from_intercepts(y_intercepts, dir_slope, x_min, x_max, y_min, y_
 def distance_from_origin(row):
     return np.sqrt(row['lng']**2 + row['lat']**2)
 
-# Find the distance between two adjacent trees in a certain direction
-# TODO: Funciton description
+
 def distance_between_adj_trees(tree_classed_df, n_labels, dir_col_name: str):
+    """
+    Find the distance between two adjacent trees, that have been clustered in a certain direction. 
+
+    Parameters:
+        tree_classed_df : DataFrame
+            DataFrame of orchard trees with classes in the two directions.
+        n_labels : int
+            Amount of clusters for current direction.
+        dir_col_name : str
+            \'dir_1_labels\' or \'dir_2_labels\'
+
+    Returns:
+        (dir_all_distances, dir_distances_dict) : (List, Dict)\n
+            dir_all_distances - List of all distances in the direction\n
+            dir_distances_dict - Dictionary of the distances for each label. dir_distances_dict[label] = (label, tree_from_id, tree_to_id, distance_between)
+    """
+
+
     dir_distances_dict = {} # dict to store distance between trees respective of their direction label and ids
     dir_all_distances = [] # list to store all distances, independent of label
 
@@ -168,8 +234,23 @@ def distance_between_adj_trees(tree_classed_df, n_labels, dir_col_name: str):
 
 # Return outlier distances between trees
 # Return List[(dir_label, tree_from_id, tree_to_id, distance),...]
-# TODO: Funciton description
 def find_distance_outliers(distances_all, distances_dict):
+    """
+    Return all the outlier distances with the trees_from and trees_to.
+    Outliers have a z-score of more than 3.
+
+    Parameters:
+        distances_all : List
+            List of all distances in the direction.
+        distances_dict : Dict
+            Dictionary of the distances for each label. dir_distances_dict[label] = (label, tree_from_id, tree_to_id, distance_between)
+
+
+    Returns:
+        List (dir_label,tree_from_id,tree_to_id,distance) : List[(int,int,int,float)]
+            All the outliers.
+    """
+    
     # Meand and Std for current direction
     mean = np.mean(distances_all)
     std = np.std(distances_all)
@@ -187,8 +268,26 @@ def find_distance_outliers(distances_all, distances_dict):
     return outliers
 
 # Find all grid intersections between outlier distances
-# TODO: Funciton description
-def find_intersects_between_trees(trees_classed_df, dir_outliers, curr_dir_linestrings, other_dir_linestrings):
+def find_intersects_between_trees(trees_classed_df, dir_outliers, curr_dir_linestrings, other_dir_linestrings) -> list[Point]:
+    """
+    Find all grid intersections on LineStrings with trees that have outlier distances between them.
+
+    Parameters:
+        trees_classed_df : DataFrame
+            List of all distances in the direction.
+        dir_outliers : List[(int,int,int,float)]
+            List of outliiers. (dir_label,tree_from_id,tree_to_id,distance)
+        curr_dir_linestrings : List(LineString)
+            LineStrings of the current direction
+        other_dir_linestrings : List(LineString)
+            LineStrings of the the other direction
+
+
+    Returns:
+        missing_points : List[Point]
+            List of Shapely Point where missing trees are.
+    """
+    
     missing_points = []
 
     # Loop through all outliers in the current direction
@@ -246,6 +345,22 @@ def find_intersects_between_trees(trees_classed_df, dir_outliers, curr_dir_lines
 # survey_response_json: GET https://api.aerobotics.com/farming/surveys/{survey_id}/tree_surveys/
 # TODO: Funciton description
 def find_all_missing_trees(orchard_response_json, survey_response_json) -> list[dict]:
+    """
+    Find all the missing trees for a given orchard.
+
+    Parameters:
+        orchard_response_json : Dict
+            List of all distances in the direction.
+        survey_response_json : List[(int,int,int,float)]
+            List of outliiers. Dict
+
+
+    Returns:
+        missing_points : List[Dict]
+            [{\"lat\" : float, \"lng\" : float}]\n
+            List of dictionaries. Each containing the longitude and latitude for a missing tree.
+
+    """
     
     # Extract polygon corners lng and lat values
     polygon_latlongs = orchard_response_json["polygon"]

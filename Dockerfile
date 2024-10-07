@@ -10,7 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code and the orchard module
 COPY app/ ./app
 COPY orchard/ ./orchard
-COPY .env ./
+# COPY .env ./
 
 # Expose the port
 EXPOSE 5000

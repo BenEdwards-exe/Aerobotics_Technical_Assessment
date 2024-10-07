@@ -17,6 +17,10 @@ from find_missing_trees import *
 app = Flask(__name__)
 
 
+@app.route("/", methods=['GET'])
+def head():
+    return "", 200
+
 
 # HOSTNAME=”aero-test.my-test-site.com”
 # curl \
@@ -26,11 +30,29 @@ app = Flask(__name__)
 # https://${HOSTNAME}/orchards/216269/missing-trees
 @app.route("/orchards/<int:orchard_id>/missing-trees", methods=['GET'])
 def get_missing_trees(orchard_id):
+    """
+    Run the missing trees finder from /orchard
+
+    orchard_id : int
+        Numerical ID of the orchard.
+    """
+
+
+    if type(orchard_id) != int:
+        return jsonify({"message": "ERROR - Invalid argument type for orchard_id."}), 422
+
 
     headers = request.headers
+
+    # content_type = headers.get('Content-Type')
+    if request.content_type != 'application/json':
+        return jsonify({'message': 'ERROR - Unsupported Media Type: Content-Type should be application/json'}), 415
+   
+   
     auth = headers.get("API-KEY")
     if auth != MISSING_TREES_API_KEY:
-        return jsonify({"message": "ERROR: Unauthorized"}), 401
+        return jsonify({"message": "ERROR - Unauthorized"}), 401
+    
 
 
     # Details of orchard; for polygon 
@@ -45,7 +67,7 @@ def get_missing_trees(orchard_id):
         return survey_response.json(), survey_response.status_code
     
     # Find the ID of the latest survey
-    surveys = survey_response.json()["results"]  # TODO: Need to handle pagination
+    surveys = survey_response.json()["results"]  
     surveys_sorted_by_date = sorted(surveys, key=lambda survey: survey["date"])
     latest_survey_id = surveys_sorted_by_date[-1]["id"]
 
