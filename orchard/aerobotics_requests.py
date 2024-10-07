@@ -1,15 +1,16 @@
 import requests
 
-# Import Global Module Variables
+# Import Global Module Variables from Config fyle
 from config import headers
 from config import API_BASE_URL
-from config import AEROBOTICS_DEV_API_KEY
 
 # Fetch the details of a single orchard
 def fetch_single_orchard(orchard_id: int) -> requests.Response:
     """
-    Fetch the details of a single orchard from the Aerobotics Developer API
+    Fetch the details of a single orchard from the Aerobotics Developer API.
 
+    Args
+    -------
     orchard_id : int
         Numerical ID of the orchard.
     """
@@ -21,8 +22,10 @@ def fetch_single_orchard(orchard_id: int) -> requests.Response:
 def fetch_all_orchard_surveys(orchard_id: int) -> requests.Response:
     """
     Fetch the details of all the surveys conducted for an 
-    orchard from the Aerobotics Developer API
+    orchard from the Aerobotics Developer API.
 
+    Args
+    ---------
     orchard_id : int
         Numerical ID of the orchard.
     """
@@ -35,8 +38,10 @@ def fetch_all_orchard_surveys(orchard_id: int) -> requests.Response:
 def fetch_single_survey(survey_id: int) -> requests.Response:
     """
     Fetch the details of a single survey conducted for an 
-    orchard from the Aerobotics Developer API
+    orchard from the Aerobotics Developer API.
 
+    Args
+    -----------
     orchard_id : int
         Numerical ID of the orchard.
     """
@@ -47,5 +52,4 @@ def fetch_single_survey(survey_id: int) -> requests.Response:
 
 
 if __name__ == "__main__":
-    r = fetch_single_orchard(216269)
-    print(r.json())
+    pass
